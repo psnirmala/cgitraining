@@ -1,0 +1,149 @@
+consumer.seek(topicpartition,offset) ------> picks up messages from the specific offset
+
+seekToBeginning()---> from offset 0
+seekToEnd()--> from the latest offset( this is the default behaviout)
+
+
+By default there is a property called enable.auto.commit is true. Kafka will commit the larget offset , the client received 
+from poll().
+ie if the message whose offset is 8 is received by the client and if this offset is the larget offset, next time the topic will 
+deliver the message whose offset is 9.
+
+enable.auto.commit=false (in the server.properties)
+
+Now the consumer should make an explicit commit, to inform the server that it has received the message.
+
+commitSync() performs a synchronous commit.
+commitAsync() will perform a asynchronous commit.
+commitAsync() takes a callback object as parameter. This callback object implements OffsetCommitCallback interface.
+
+
+connectors:
+Connectors are special kafka components used to listen changes that happen to a data source like a file
+or database and pull in those messages automatically.
+They are used for streaming data. 
+
+            
+source----------->sourceconnector--------->Kafka------>sink connector ---------->sink
+
+source provides data to kafka.
+sink consumes data from kafka.
+
+In real time , source may be one file and sink may be another file.
+
+source may be a file and sink may be a database.
+
+source may  be a database like oracle db and sink may be a nosql db like cassandra.
+
+FileStreamSource is a connector class meant for file source connector.
+
+open the config\connect-file-source.properties
+name=local-file-source
+
+connector.class=FileStreamSource
+
+tasks.max=1
+
+file=c:/fileinput/test.txt
+
+topic=test-connector-topic
+
+To start the connector, use the following command
+bin\windows\connect-standalone.bat config\connect-standalone.properties config\connect-file-source.properties
+
+Line by line, c:\fileinput\test.txt would have been read and published to the topic named test-connector-topic.
+
+start a consumer for the test-connector-topic
+kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic test-connector-topic --from-beginning
+
+
+The Connector class FileStreamSource is used to read from a file source.
+The connector class FileStreamSink is used to write to a file sink.
+
+source is the input and sink is the output.
+
+sample config\connect-file-sink.properties
+
+name=local-file-sink
+
+connector.class=FileStreamSink
+
+tasks.max=1
+
+file=c:/fileoutput/testout.txt
+
+topics=test-connector-topic
+
+
+
+bin\windows\connect-standalone.bat config\connect-standalone.properties config\connect-file-source.properties config\connect-file-sink.properties
+
+
+In this example , the source connector picks up the message from the file c:/fileinput/test.txt and published it to a 
+topic called test-connector-topic. The sink connector picks up the message from the topic called test-connector-topic
+and writes it to a file called c:/fileoutput/testout.txt
+
+
+To connect to databases using kafka, jdbc connectors are required.
+
+Confluent Kafka:
+
+Confluent Kafka is a kafka distribution with additional connectors, libraries and components.
+It provides both community version and commercial version.
+At present, Confluent Kafka is available only for linux.
+
+
+Confluent Kafka contains 6 sub directories:
+
+bin -- scripts 
+lib -- system services
+src -- source code from which the community version is built.
+etc -- libraries
+share -- shared libraries
+logs -- log files.
+
+In the terminal window move to the bin directory of confluent kafka and type the following command to start confluent platform.
+sudo ./confluent start
+
+confluent kafka platform comes with components like zookeeper, kafka, schema registry, rest server,ksql server and
+control center.
+
+zookeeper provides co-ordination service for kafka components.
+schema registry  contains the schema definition for most of custom formats like avro.
+kafka rest provides restful service based urls for adding,updating,removing and retrieving details about
+kafka services and connectors.
+ksql server --- kafka provides sql like query language called ksql and the queries are submitted to ksql server and then 
+executed.
+control center -- provides a web based interface to interact with confluent kafka platform.
+steps to use mysql source connector.
+
+1. create a database and create a table with primary key and auto increment column.
+create table employee(emp_id integer primary key auto_increment, emp_name varchar(20),designation varchar(20));
+2. download the mysql jdbc driver copy it to share/java/kafka-connect-jdbc directory.
+3. create properties file under etc/kafka-connect-jdbc directory and configure the connect parameters.
+sample parameters
+connection.url --- the jdbc connection url
+mode=incrementing --- denotes that there is an incrementing column in the table, whenever a new row is inserted , there
+will be a new value in the incrementing column. The connector will keep track of the value of this incrementing column.
+whenever there is a change in this column value(ie whenever a row is inserted), it will be published to the topic.
+incrementing.column.name -- the name of the column which gets incremented (emp_id in our employee table)
+topic.prefix --- the topic name to which the data will be published. the topic name will be table name prefixed with topic.prefix.
+
+if the topic.prefix is test-mysqlconnector- and the table name is employee, the topic name will be 
+test-mysqlconnector-employee
+
+in our example,
+connection.url=jdbc:mysql://192.168.225.37/cgikafkatrainingdb?user=root&password=root
+
+4. start the connector using the following command.
+from the confluent directory,
+
+bin/connect-standalone etc/schema-registry/connect-avro-standalone.properties etc/kafka-connect-jdbc/source-quickstart-mysql.properties
+
+
+ETL pipeline
+
+mysqldb--->mysqlsourceconnector-->topic1---->kafkaconsumer--->topic2----->cassandra sink connector---->cassandradb--->cassandrasourceconnector--->topic3---->kafkaconsumer--->topic4--->oraclesinkconnector--->oracledb
+
+
+

@@ -1,0 +1,92 @@
+
+A kafka cluster has 3 nodes. Assume that you want to have
+4 partitions. 
+The partitions are numbered as partition-0,partition-1,partition-2 and partition-3
+
+If the replication factor is is 2 then,
+
+node1 may have partition-0 , partition-1 and partition-2
+node 2 may have partition-2 ,partition-3 and partition-4
+node 3 may have partition-0, partition-1,partition-3 and partition-4
+
+
+All the messages with the same key , will go to the same  partition.
+
+Sending a message synchronously:
+
+producer.send(record).get()
+
+Sending a message asynchronously:
+
+producer.send(record,new Callback(){
+public void onCompletion(RecordMetaData rmd,Exception e)
+{
+if(e!=null){
+e.printStackTrace();
+}
+else{
+//access rmd to get partition and offset info
+}
+}
+}
+
+
+interface Callback{
+public void onCompletion(RecordMetaData rmd,Exception e);
+}
+
+
+To convert a java object to xml and vice versa, jaxb apis are used.
+
+jax-b -- java api for xml binding.
+
+a jaxb compliant class should be prefixed with @XMLRootElement annotation, should have getter/setter methods
+and should have a no argument constructor.
+
+using jax-b marshaller, a java object can be converted to xml.
+
+
+To create a custom serializer, implement the Serializer interface.
+
+Serializer has 3 methods namely configure(),serialize() and close() methods.
+
+The initialization logic can be placed in configure() method.
+serialize() should have serialization logic (ie converting the object to byte[] format)
+close() should have clean up code.
+
+In the receiver side, to receive the message as a java object, we have to create a custom deserializer.
+
+Deserializer has 3 methods namely configure(),deserialize() and close() methods.
+
+The initialization logic can be placed in configure() method.
+deserialize() should have deserialization logic (ie converting the byte[]  format to java object)
+close() should have clean up code.
+
+
+Kafka comes with in built jackson parser. So when serializing or deserializing,
+the intermediate format can be json alson.
+
+Custom Partitioner:
+
+By default, kafka uses hash partitioning.
+Custom Partitioning logic can be implemented by implementing an interface called Partitioner.
+
+Partitioner interface has 3 methods namely configure(),partition() and close().
+
+The partition method should return an integer which denotes the partition number to which the current
+message should go.
+
+The command
+kafka-topics.bat --create --topic employeeTopic --partitions 4 --replication-factor 1 --zookeeper localhost:2181
+will create a topic called employeeTopic with 4 partitions.
+partitions will be  named as 0,1,2 and 3.
+
+when using a custom partitioner, the sender should specify the custom partitioner, using a special 
+property called partitioner.class.
+
+Order of the messages are guaranteed within the same partition.
+ie after consuming the offset 0 of partition 0 only, offset 1 of partition 0 will be consumed.
+
+It is not guaranteed that 
+
+after consuming the offset 0 of partition 0 , offset 0 or offset 1 of partition 1 will be consumed.

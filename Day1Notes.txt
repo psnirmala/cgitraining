@@ -1,0 +1,107 @@
+A single kafka server is called a broker.
+
+Multiple brokers make up a cluster.
+
+Each broker runs a separate kafka instance.
+
+In messaging, the sender is completely decoupled from the receiver.
+
+
+Messaging ensures that an application asynchronously communicates with another app.
+
+
+sender ---------------->MOM----------------->Receiver
+
+MOM-- Message Oriented Middleware.
+
+publish and subscribe messaging ensures that a message from one sender
+reaches multiple receivers.
+
+Topic is a special component in the messaging server which temporarily stores the 
+message. It is also called a messaging destination.
+
+Kafka is developed using Java and Scala.
+
+The popular apis available for Kafka are either in Java or Scala.
+
+Zookeeper is a service used to control operations in Kafka.
+
+Meta data about kafka components are stored in zookeeper.
+
+Kafka main directories.
+
+bin ---- scripts for start/stop and etc
+libs---- contains the necessary jar files
+config --- contains configuration files
+
+Confluent Kafka is a packaged kafka distribution which comes with some additional 
+connectors and readymade components.
+
+bin directory contains another directory called windows where windows os  specific scripts 
+are available.
+
+kafka_2.11-2.1.0.tgz means that  you are downloading kafka 2.1.0 distribution 
+which has been developed using scala 2.11.
+
+steps for setting up kafka :
+
+1. download the tgz file and extract it.
+2. set the JAVA_HOME environment variable
+3. start the zookeeper service.
+
+By default it stores the info in the \tmp directory. clear the content of this directory
+before you start zookeeper.
+go to the kafka home directory and run the following command.
+bin\windows\zookeeper-server-start.bat config\zookeeper.properties
+By default zookeeper runs at the port number 2181.
+
+4. start the kafka server
+
+kafka server by default, runs at port number 9092.
+bin\windows\kafka-server-start.bat config\server.properties
+
+5. create a topic called topic1
+
+C:\software\kafka_zookeeper\kafka_2.11-2.0.0\bin\windows>kafka-topics.bat --create --zookeeper localhost:2181 --topic topic1 --replication-factor 1 --partitions 2
+
+replication factor denotes the number of nodes in which the topic should be distributed. since there is only one kafka 
+broker running, the replication factor is specified as 1.
+partitioning a topic splits the data forwarded to a topic across parallel streams.
+
+6. start the message consumer.
+C:\software\kafka_zookeeper\kafka_2.11-2.0.0\bin\windows>kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic topic1
+
+
+--bootstrap-server denotes the url of the kafka server to which the message consumer listens.
+--topic denotes the topic name from which the consumer will receive messages.
+
+7. start the message producer
+kafka-console-producer.bat --broker-list localhost:9092 --topic topic1
+
+To list the topics,
+kafka-topics --list --zookeeper localhost:2181.
+
+kafka understands the message in the format of byte arrays.
+if you send a string message, this should be converted into a byte array.
+this conversion is performed by a serializer.
+each message is associated with a key and value.
+both keys and values should be converted into byte array using serializers.
+
+
+in the receiver side, the byte array should be converted back into string format.
+this is done by deserializers.
+
+the group of messages with the same key will move to the same partition.
+
+
+If you want to achive a request, response cycle between the sender and receiver.
+
+sender---->sends the message to topic1 and listens at topic2
+
+receiver --> listens at topic and sends the message to topic2
+
+
+
+
+
+
